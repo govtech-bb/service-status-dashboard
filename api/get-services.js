@@ -33,24 +33,39 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Construct Airtable API URL
-    const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
+    // Fetch all records from Airtable (handling pagination)
+    let allRecords = [];
+    let offset = null;
 
-    // Fetch data from Airtable
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${AIRTABLE_PAT}`
+    do {
+      // Construct Airtable API URL with pagination
+      const url = new URL(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`);
+      if (offset) {
+        url.searchParams.append('offset', offset);
       }
-    });
 
-    if (!response.ok) {
-      throw new Error(`Airtable API error: ${response.status}`);
-    }
+      // Fetch data from Airtable
+      const response = await fetch(url.toString(), {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_PAT}`
+        }
+      });
 
-    const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`Airtable API error: ${response.status}`);
+      }
 
-    // Return the data
-    res.status(200).json(data);
+      const data = await response.json();
+
+      // Add records to our collection
+      allRecords = allRecords.concat(data.records || []);
+
+      // Check if there are more pages
+      offset = data.offset;
+    } while (offset);
+
+    // Return all records
+    res.status(200).json({ records: allRecords });
   } catch (error) {
     console.error('Error fetching from Airtable:', error);
     res.status(500).json({
