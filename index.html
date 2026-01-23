@@ -201,6 +201,7 @@
             align-items: center;
             gap: 0.5rem;
             font-size: 0.875rem;
+            flex-wrap: nowrap;
         }
 
         .status-dot {
@@ -208,6 +209,7 @@
             height: 10px;
             border-radius: 50%;
             display: inline-block;
+            flex-shrink: 0;
         }
 
         .status-dot.backlog {
@@ -244,6 +246,22 @@
         .no-link {
             color: #999;
             font-size: 0.875rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+            font-size: 1.125rem;
+        }
+
+        .error {
+            background-color: #fee;
+            border: 1px solid #fcc;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            color: #c33;
         }
 
         @media (max-width: 768px) {
@@ -299,28 +317,16 @@
     <div class="container">
         <h1>Service status</h1>
 
+        <div id="error-container"></div>
+        <div id="loading" class="loading">Loading services...</div>
+
         <!-- Status counters -->
-        <div class="status-grid">
-            <div class="status-card backlog" data-status="backlog" onclick="filterServices('backlog')">
-                <div class="status-count">1</div>
-                <div class="status-label">Backlog</div>
-            </div>
-            <div class="status-card in-progress" data-status="in-progress" onclick="filterServices('in-progress')">
-                <div class="status-count">0</div>
-                <div class="status-label">In progress</div>
-            </div>
-            <div class="status-card feature-flagged" data-status="feature-flagged" onclick="filterServices('feature-flagged')">
-                <div class="status-count">12</div>
-                <div class="status-label">Feature flagged</div>
-            </div>
-            <div class="status-card public" data-status="public" onclick="filterServices('public')">
-                <div class="status-count">0</div>
-                <div class="status-label">Public</div>
-            </div>
+        <div class="status-grid" id="status-grid" style="display: none;">
+            <!-- Will be populated dynamically -->
         </div>
 
         <!-- Services table -->
-        <table class="services-table">
+        <table class="services-table" id="services-table" style="display: none;">
             <thead>
                 <tr>
                     <th>Service</th>
@@ -329,182 +335,137 @@
                     <th>Link</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Apply to be a Project Protege Mentor</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Youth, Sports, Community Empowerment</td>
-                    <td>
-                        <a href="https://alpha.gov.bb/work-employment/apply-to-be-a-project-protege-mentor/form?step=personal" class="view-link" target="_blank">View service</a>
-                    </td>
-                </tr>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Register for a Youth Development Programme (YDP) Community Sports Training programme</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Youth, Sports, Community Empowerment</td>
-                    <td>
-                        <a href="https://alpha.gov.bb/work-employment/register-for-community-sports-training-programme/form?p=demo" class="view-link" target="_blank">View service</a>
-                    </td>
-                </tr>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Get a Primary School Textbook Grant</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Educational Transformation</td>
-                    <td>
-                        <a href="https://alpha.gov.bb/money-financial-support/get-a-primary-school-textbook-grant" class="view-link" target="_blank">View service</a>
-                    </td>
-                </tr>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Register for JobStart Plus</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Labour, Social Security and Third Sector</td>
-                    <td>
-                        <span class="no-link">—</span>
-                    </td>
-                </tr>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Apply for a conductor's licence</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Transport and Works</td>
-                    <td>
-                        <span class="no-link">—</span>
-                    </td>
-                </tr>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Apply for a licence to sell goods or services at a beach or park</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Environment and Beautification</td>
-                    <td>
-                        <span class="no-link">—</span>
-                    </td>
-                </tr>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Get a copy of a death certificate</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Attorney General's Office</td>
-                    <td>
-                        <span class="no-link">—</span>
-                    </td>
-                </tr>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Get a copy of a birth certificate</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Attorney General's Office</td>
-                    <td>
-                        <span class="no-link">—</span>
-                    </td>
-                </tr>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Get a copy of a marriage certificate</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Attorney General's Office</td>
-                    <td>
-                        <span class="no-link">—</span>
-                    </td>
-                </tr>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Tell the Post Office soemone has died</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Prime Minister's Office</td>
-                    <td>
-                        <span class="no-link">—</span>
-                    </td>
-                </tr>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Redirect my personal mail</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Prime Minister's Office</td>
-                    <td>
-                        <span class="no-link">—</span>
-                    </td>
-                </tr>
-                <tr data-status="feature-flagged">
-                    <td class="service-name">Redirect my business mail</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot feature-flagged"></span>
-                            Feature flagged
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Prime Minister's Office</td>
-                    <td>
-                        <span class="no-link">—</span>
-                    </td>
-                </tr>
-                <tr data-status="backlog">
-                    <td class="service-name">Request a building inspection from the fire service</td>
-                    <td>
-                        <span class="status-badge">
-                            <span class="status-dot backlog"></span>
-                            Backlog
-                        </span>
-                    </td>
-                    <td class="ministry ministry-col">Prime Minister's Office</td>
-                    <td>
-                        <span class="no-link">—</span>
-                    </td>
-                </tr>
+            <tbody id="services-tbody">
+                <!-- Will be populated dynamically -->
             </tbody>
         </table>
     </div>
 
     <script>
+        // No configuration needed - uses serverless function
         let currentFilter = null;
+        let servicesData = [];
+
+        // Status normalization map
+        const statusMap = {
+            'Feature flagged': 'feature-flagged',
+            'Backlog': 'backlog',
+            'In progress': 'in-progress',
+            'Public': 'public'
+        };
+
+        // Status display labels
+        const statusLabels = {
+            'backlog': 'Backlog',
+            'in-progress': 'In progress',
+            'feature-flagged': 'Feature flagged',
+            'public': 'Public'
+        };
+
+        async function fetchAirtableData() {
+            try {
+                // Call the Vercel serverless function
+                const response = await fetch('/api/get-services');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data.records || [];
+            } catch (error) {
+                console.error('Error fetching Airtable data:', error);
+                showError('Failed to load services data. Please check your configuration.');
+                return [];
+            }
+        }
+
+        function showError(message) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = `<div class="error">${message}</div>`;
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function normalizeStatus(status) {
+            return statusMap[status] || status.toLowerCase().replace(/\s+/g, '-');
+        }
+
+        function parseAirtableData(records) {
+            return records.map(record => ({
+                name: record.fields['Service Name'] || '',
+                status: normalizeStatus(record.fields['Status'] || ''),
+                ministry: record.fields['Ministry'] || '',
+                link: record.fields['Link'] || ''
+            }));
+        }
+
+        function calculateStatusCounts(services) {
+            const counts = {
+                'backlog': 0,
+                'in-progress': 0,
+                'feature-flagged': 0,
+                'public': 0
+            };
+
+            services.forEach(service => {
+                if (counts.hasOwnProperty(service.status)) {
+                    counts[service.status]++;
+                }
+            });
+
+            return counts;
+        }
+
+        function renderStatusCards(counts) {
+            const statusGrid = document.getElementById('status-grid');
+            statusGrid.innerHTML = '';
+
+            Object.keys(counts).forEach(status => {
+                const card = document.createElement('div');
+                card.className = `status-card ${status}`;
+                card.dataset.status = status;
+                card.onclick = () => filterServices(status);
+
+                card.innerHTML = `
+                    <div class="status-count">${counts[status]}</div>
+                    <div class="status-label">${statusLabels[status]}</div>
+                `;
+
+                statusGrid.appendChild(card);
+            });
+
+            statusGrid.style.display = 'grid';
+        }
+
+        function renderServicesTable(services) {
+            const tbody = document.getElementById('services-tbody');
+            tbody.innerHTML = '';
+
+            services.forEach(service => {
+                const row = document.createElement('tr');
+                row.dataset.status = service.status;
+
+                const linkCell = service.link
+                    ? `<a href="${service.link}" class="view-link" target="_blank">View service</a>`
+                    : `<span class="no-link">—</span>`;
+
+                row.innerHTML = `
+                    <td class="service-name">${service.name}</td>
+                    <td>
+                        <span class="status-badge">
+                            <span class="status-dot ${service.status}"></span>
+                            ${statusLabels[service.status] || service.status}
+                        </span>
+                    </td>
+                    <td class="ministry ministry-col">${service.ministry}</td>
+                    <td>${linkCell}</td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('services-table').style.display = 'table';
+        }
 
         function filterServices(status) {
             const cards = document.querySelectorAll('.status-card');
@@ -539,6 +500,26 @@
                 }
             });
         }
+
+        async function initialize() {
+            const records = await fetchAirtableData();
+
+            if (records.length === 0) {
+                showError('No data found in Airtable.');
+                return;
+            }
+
+            servicesData = parseAirtableData(records);
+            const statusCounts = calculateStatusCounts(servicesData);
+
+            renderStatusCards(statusCounts);
+            renderServicesTable(servicesData);
+
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', initialize);
     </script>
 </body>
 </html>
