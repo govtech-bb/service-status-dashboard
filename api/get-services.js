@@ -1,75 +1,82 @@
 // Vercel serverless function to fetch Airtable data
-// This keeps your Airtable Personal Access Token secure
+// Uses Vercel KV for caching (1 hour TTL)
+
+import { kv } from '@vercel/kv';
+
+const CACHE_KEY = 'services-data';
+const CACHE_TTL = 3600; // 1 hour in seconds
+
+async function fetchFromAirtable() {
+  const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
+  const AIRTABLE_TABLE_NAME = process.env.AIRTABLE_TABLE_NAME;
+  const AIRTABLE_PAT = process.env.AIRTABLE_PAT;
+
+  if (!AIRTABLE_BASE_ID || !AIRTABLE_TABLE_NAME || !AIRTABLE_PAT) {
+    throw new Error('Server configuration error. Please check environment variables.');
+  }
+
+  let allRecords = [];
+  let offset = null;
+
+  do {
+    const url = new URL(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`);
+    if (offset) {
+      url.searchParams.append('offset', offset);
+    }
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Authorization': `Bearer ${AIRTABLE_PAT}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Airtable API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    allRecords = allRecords.concat(data.records || []);
+    offset = data.offset;
+  } while (offset);
+
+  return allRecords;
+}
 
 export default async function handler(req, res) {
-  // Set CORS headers to allow requests from your frontend
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  // Only allow GET requests
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
-  // Get Airtable credentials from environment variables
-  const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
-  const AIRTABLE_TABLE_NAME = process.env.AIRTABLE_TABLE_NAME;
-  const AIRTABLE_PAT = process.env.AIRTABLE_PAT;
-
-  // Validate environment variables
-  if (!AIRTABLE_BASE_ID || !AIRTABLE_TABLE_NAME || !AIRTABLE_PAT) {
-    res.status(500).json({
-      error: 'Server configuration error. Please check environment variables.'
-    });
-    return;
-  }
-
   try {
-    // Fetch all records from Airtable (handling pagination)
-    let allRecords = [];
-    let offset = null;
+    // Try to get cached data first
+    const cached = await kv.get(CACHE_KEY);
 
-    do {
-      // Construct Airtable API URL with pagination
-      const url = new URL(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`);
-      if (offset) {
-        url.searchParams.append('offset', offset);
-      }
+    if (cached) {
+      return res.status(200).json({ records: cached, source: 'cache' });
+    }
 
-      // Fetch data from Airtable
-      const response = await fetch(url.toString(), {
-        headers: {
-          'Authorization': `Bearer ${AIRTABLE_PAT}`
-        }
-      });
+    // Cache miss - fetch from Airtable
+    const records = await fetchFromAirtable();
 
-      if (!response.ok) {
-        throw new Error(`Airtable API error: ${response.status}`);
-      }
+    // Store in cache with TTL
+    await kv.set(CACHE_KEY, records, { ex: CACHE_TTL });
 
-      const data = await response.json();
-
-      // Add records to our collection
-      allRecords = allRecords.concat(data.records || []);
-
-      // Check if there are more pages
-      offset = data.offset;
-    } while (offset);
-
-    // Return all records
-    res.status(200).json({ records: allRecords });
+    res.status(200).json({ records, source: 'airtable' });
   } catch (error) {
-    console.error('Error fetching from Airtable:', error);
+    console.error('Error fetching services:', error);
     res.status(500).json({
-      error: 'Failed to fetch data from Airtable',
+      error: 'Failed to fetch data',
       message: error.message
     });
   }
