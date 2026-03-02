@@ -182,6 +182,21 @@
             letter-spacing: 0.05em;
         }
 
+        .services-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .services-table th.sortable:hover {
+            color: #1e3a8a;
+        }
+
+        .sort-arrow {
+            display: inline-block;
+            margin-left: 0.25rem;
+            font-size: 0.7rem;
+        }
+
         .services-table td {
             padding: 1rem;
             border-bottom: 1px solid #f0f0f0;
@@ -329,9 +344,9 @@
         <table class="services-table" id="services-table" style="display: none;">
             <thead>
                 <tr>
-                    <th>Service</th>
+                    <th class="sortable" onclick="sortByName()">Service <span class="sort-arrow" id="name-sort-arrow"></span></th>
                     <th>Status</th>
-                    <th class="ministry-col">Ministry</th>
+                    <th class="ministry-col sortable" onclick="sortByMinistry()">Ministry <span class="sort-arrow" id="ministry-sort-arrow"></span></th>
                     <th>Link</th>
                 </tr>
             </thead>
@@ -345,6 +360,8 @@
         // No configuration needed - uses serverless function
         let currentFilter = null;
         let servicesData = [];
+        let sortColumn = null; // 'name' or 'ministry'
+        let sortDirection = null; // 'asc' or 'desc'
 
         // Status normalization map
         const statusMap = {
@@ -500,6 +517,37 @@
                 }
             });
         }
+
+        function sortBy(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+
+            // Update arrows
+            document.getElementById('name-sort-arrow').textContent = sortColumn === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : '';
+            document.getElementById('ministry-sort-arrow').textContent = sortColumn === 'ministry' ? (sortDirection === 'asc' ? '▲' : '▼') : '';
+
+            const sorted = [...servicesData].sort((a, b) => {
+                const cmp = a[column].localeCompare(b[column]);
+                return sortDirection === 'asc' ? cmp : -cmp;
+            });
+
+            renderServicesTable(sorted);
+
+            // Re-apply active filter if one is set
+            if (currentFilter) {
+                const rows = document.querySelectorAll('.services-table tbody tr');
+                rows.forEach(row => {
+                    row.style.display = row.dataset.status === currentFilter ? '' : 'none';
+                });
+            }
+        }
+
+        function sortByName() { sortBy('name'); }
+        function sortByMinistry() { sortBy('ministry'); }
 
         async function initialize() {
             const records = await fetchAirtableData();
